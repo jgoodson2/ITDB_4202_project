@@ -1,0 +1,92 @@
+CREATE OR REPLACE VIEW V1_search_org_name AS
+  SELECT
+    A.ENG_ID              V1_ENG_ID,
+    wm_concat(F.ORG_NAME) V1_org_names
+  FROM ENGAGEMENT A
+    JOIN ENGORG E ON a.ENG_ID = E.ENG_ID
+    JOIN ORGANIZATION F ON e.ORG_ID = F.ORG_ID
+  GROUP BY A.ENG_ID;
+
+CREATE OR REPLACE VIEW V2_eng_2_acad_disc AS
+  SELECT
+    a.ENG_ID               V2_ENG_ID,
+    wm_concat(c.DISC_NAME) V2_disc_names
+  FROM ENGAGEMENT A
+    LEFT JOIN ENGDISCIPLINE B ON a.ENG_ID = b.ENG_ID
+    JOIN ACAD_DISC C ON b.DISC_ID = C.DISC_ID
+  GROUP BY a.ENG_ID;
+
+CREATE OR REPLACE VIEW v3_eng_topic_names AS
+  SELECT
+    a.ENG_ID                V3_eng_id,
+    wm_concat(C.TOPIC_NAME) v3_topic_names
+  FROM ENGAGEMENT A
+    LEFT JOIN ENGTOPICAREAS B ON a.ENG_ID = b.ENG_ID
+    JOIN TOPIC_AREAS C ON b.TOPIC_ID = c.TOPIC_ID
+  GROUP BY a.ENG_ID;
+
+CREATE OR REPLACE VIEW V4_eng_2_relcrs AS
+  SELECT
+    A.ENG_ID                                 V4_eng_id,
+    wm_concat(c.COURSE_SUBJ || C.COURSE_NUM) V4_RelCrs
+  FROM ENGAGEMENT A
+    JOIN ENGRELATEDCOURSE B ON a.ENG_ID = b.ENG_ID
+    JOIN RELATED_COURSES C ON b.COURSE_NUM = c.COURSE_NUM
+                              AND B.COURSE_SUBJ = C.COURSE_SUBJ
+  GROUP BY a.ENG_ID;
+
+--engagement to location_name
+CREATE OR REPLACE VIEW V5_eng2locname AS
+  SELECT
+    A.ENG_ID V5_ENG_ID,
+    wm_concat(C.LOC_NAME) V5_LOCNAMES
+  FROM ENGAGEMENT A
+    JOIN ENGLOC B ON a.ENG_ID = b.ENG_ID
+    JOIN LOCATION C ON B.LOC_ID = c.LOC_ID
+GROUP BY A.ENG_ID;
+
+--engagement to location_citystate
+CREATE OR REPLACE VIEW V6_eng2loccitystates AS
+  SELECT
+    A.ENG_ID V6_ENG_ID,
+    wm_concat(replace(trim(C.LOC_CITY),' ','')||C.LOC_STATE_CODE) V6_LOCCITYSTATES
+  FROM ENGAGEMENT A
+    JOIN ENGLOC B ON a.ENG_ID = b.ENG_ID
+    JOIN LOCATION C ON B.LOC_ID = c.LOC_ID
+GROUP BY A.ENG_ID;
+
+--engagement to location_zip
+CREATE OR REPLACE VIEW V7_eng2loczips AS
+  SELECT
+    A.ENG_ID V7_ENG_ID,
+    wm_concat(C.LOC_ZIP) V7_LOCZIPS
+  FROM ENGAGEMENT A
+    JOIN ENGLOC B ON a.ENG_ID = b.ENG_ID
+    JOIN LOCATION C ON B.LOC_ID = c.LOC_ID
+GROUP BY A.ENG_ID;
+
+--engagement to class
+SELECT * FROM ENGAGEMENT A
+JOIN ENGCLASS B on a.ENG_ID = B.ENG_ID
+JOIN CLASS C on B.CLASS_CRN = C.CLASS_CRN
+AND B.CLASS_TERM = C.CLASS_TERM;
+
+CREATE OR REPLACE VIEW V_SEARCH AS
+  SELECT *
+  FROM ENGAGEMENT A
+    JOIN VAL_ENG_TYPE B ON a.ENG_TYPE = b.TYPE_ID
+    JOIN VAL_STU_LVL C ON a.ENG_STUDENT_LEVEL = C.STU_LVL_CODE
+    JOIN VAL_TIMEFRAME D ON a.ENG_TIMEFRAME = d.TIMEFR_ID
+    LEFT JOIN V1_search_org_name E ON a.ENG_ID = e.V1_ENG_ID
+    LEFT JOIN V2_eng_2_acad_disc F ON a.ENG_ID = F.V2_ENG_ID
+    LEFT JOIN v3_eng_topic_names G ON a.ENG_ID = g.V3_eng_id
+    LEFT JOIN V4_eng_2_relcrs H ON a.ENG_ID = H.V4_eng_id
+    LEFT JOIN V5_eng2locname I ON a.ENG_ID =I.V5_ENG_ID
+    LEFT JOIN V6_eng2loccitystates J on a.ENG_ID = J.V6_ENG_ID
+    LEFT JOIN V7_eng2loczips K on A.ENG_ID = K.V7_ENG_ID
+
+;
+
+SELECT *
+FROM V_SEARCH A
+WHERE a.ENG_ID < '6';
